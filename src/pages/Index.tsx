@@ -6,16 +6,15 @@ import { TagBadge, type TagVariant } from "@/components/TagBadge";
 import { DiscussionPost } from "@/components/DiscussionPost";
 import { ArrowRight, Megaphone, Building2, ArrowBigUp, ArrowBigDown, Share2, MessageCircle, Bookmark, Hash, TrendingUp, ThumbsUp, MessageSquare, Landmark, Scale, Search, Bell, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { CreatePostInput } from "@/components/CreatePostInput";
+import { createPost } from "@/services/postService";
+import { uploadMedia } from "@/services/storageService";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { useState } from "react";
 import { useJoinedGroups } from "@/contexts/JoinedGroupsContext";
 
-const trendingPosts = [
-  { content: "PM Modi's vision for Viksit Bharat 2047 is setting clear development goals.", author: "Vikram S.", tag: "appreciation" as TagVariant, likes: 1234, replies: 189, time: "1h ago", source: "BJP", sourceLink: "/parties/bjp" },
-  { content: "Delhi's education model is being studied by 5 other states. Proof that governance works!", author: "Neha T.", tag: "appreciation" as TagVariant, likes: 967, replies: 142, time: "2h ago", source: "AAP", sourceLink: "/parties/aap" },
-  { content: "Mumbai Metro Line 3 trial run was fantastic! This will change how millions commute.", author: "Pooja D.", tag: "appreciation" as TagVariant, likes: 856, replies: 98, time: "1h ago", source: "Mumbai", sourceLink: "/cities/mumbai" },
-  { content: "Should Delhi prioritize expanding the metro or improving bus connectivity?", author: "Nisha R.", tag: "discussion" as TagVariant, likes: 723, replies: 167, time: "3h ago", source: "New Delhi", sourceLink: "/cities/delhi" },
-  { content: "NEP 2025 draft is open for public feedback — everyone should participate!", author: "Ankit M.", tag: "announcement" as TagVariant, likes: 645, replies: 78, time: "4h ago", source: "Education Ministry", sourceLink: "/ministries/education" },
-];
+
 
 const ministries = [
   { id: "health", name: "Ministry of Health & Family Welfare", level: "central" as const, memberCount: 124500, latestUpdate: "New guidelines on mental health awareness released" },
@@ -128,18 +127,68 @@ const searchableItems = [
 const Index = () => {
   const navigate = useNavigate();
   const { joinedGroups, totalNotifications } = useJoinedGroups();
+  const { user } = useAuth();
   const [activeCity, setActiveCity] = useState<string>("all");
   const [activeTag, setActiveTag] = useState<TagVariant | "all">("all");
   const [activeDept, setActiveDept] = useState<string>("all");
   const [votes, setVotes] = useState<Record<number, "up" | "down" | null>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [localPosts, setLocalPosts] = useState<any[]>([]);
 
   const searchResults = searchQuery.length >= 2
     ? searchableItems.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6)
     : [];
 
-  const filteredPosts = aggregatedCityPosts.filter((p) => {
+  const handleCreatePost = async (content: string, tag: TagVariant, file?: File | null) => {
+    if (!user) return;
+    try {
+      let media_url = null;
+      let media_type = null;
+      if (file) {
+        media_url = await uploadMedia(file);
+        media_type = file.type;
+      }
+      
+      const newPost = {
+        author: user.name || user.email?.split("@")[0] || "User",
+        tag,
+        content,
+        likes: 0,
+        replies: 0,
+        time: "Just now",
+        city: activeCity !== "all" ? activeCity : "New Delhi",
+        cityId: activeCity !== "all" ? searchableItems.find(i => i.name === activeCity)?.path.split('/').pop() || "delhi" : "delhi",
+        ministry: activeDept !== "all" ? activeDept : "General Issues",
+        ministryId: activeDept !== "all" ? activeDept.toLowerCase().replace(/\s+/g, '-') : "general",
+        media_url,
+        media_type
+      };
+      
+      await createPost({
+        user_id: user.$id,
+        user_name: newPost.author,
+        content,
+        tag,
+        city: newPost.city,
+        city_id: newPost.cityId,
+        ministry: newPost.ministry,
+        ministry_id: newPost.ministryId,
+        group_id: `city-${newPost.cityId}`,
+        media_url,
+        media_type
+      });
+
+      setLocalPosts((prev) => [newPost, ...prev]);
+      toast.success("Posted successfully!");
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
+  const allPosts = [...localPosts, ...aggregatedCityPosts];
+  const filteredPosts = allPosts.filter((p) => {
     const cityMatch = activeCity === "all" || p.city === activeCity;
     const tagMatch = activeTag === "all" || p.tag === activeTag;
     const deptMatch = activeDept === "all" || p.ministry === activeDept;
@@ -285,26 +334,33 @@ const Index = () => {
               <TrendingUp className="h-4 w-4" /> Trending
             </h2>
           </div>
-          <motion.div variants={container} initial="hidden" animate="show" className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-            {trendingPosts.map((t, i) => (
-              <motion.div key={i} variants={item}>
-                <div className="glass-card rounded-lg p-4 h-full flex flex-col">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TagBadge variant={t.tag} label={t.tag.charAt(0).toUpperCase() + t.tag.slice(1)} />
-                    <span className="text-[11px] text-muted-foreground ml-auto">{t.time}</span>
+          <motion.div variants={container} initial="hidden" animate="show" className="grid gap-3 md:grid-cols-3">
+            {[...aggregatedCityPosts].sort((a, b) => (b.likes + b.replies) - (a.likes + a.replies)).slice(0, 3).map((post, i) => {
+              const pId = `${post.cityId}-${post.ministryId}-${post.author.replace(/[^a-zA-Z0-9]/g, '')}-${aggregatedCityPosts.indexOf(post)}`;
+              return (
+                <motion.div key={i} variants={item}>
+                  <div className="h-full flex flex-col">
+                    <DiscussionPost
+                      postId={pId}
+                      author={post.author}
+                      tag={post.tag}
+                      content={post.content}
+                      likes={post.likes}
+                      replies={post.replies}
+                      time={post.time}
+                    >
+                      <Link
+                        to={`/ministries/${post.ministryId}`}
+                        className="inline-flex items-center gap-1.5 rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        <Building2 className="h-3 w-3" />
+                        {post.ministry}
+                      </Link>
+                    </DiscussionPost>
                   </div>
-                  <p className="text-sm text-card-foreground leading-relaxed line-clamp-2 mb-3 flex-1">{t.content}</p>
-                  <div className="flex items-center justify-between mt-auto">
-                    <Link to={t.sourceLink} className="text-[11px] font-medium text-primary hover:underline truncate max-w-[50%]">{t.source}</Link>
-                    <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
-                      <span className="flex items-center gap-0.5"><ThumbsUp className="h-3 w-3" />{t.likes}</span>
-                      <span className="flex items-center gap-0.5"><MessageSquare className="h-3 w-3" />{t.replies}</span>
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-muted-foreground mt-1">{t.author}</span>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </motion.div>
         </section>
 
@@ -383,6 +439,8 @@ const Index = () => {
             </div>
           </div>
 
+          <CreatePostInput onSubmit={handleCreatePost} className="mb-6 shadow-sm" />
+
           {/* Posts — Reddit style with vote rail */}
           <div className="space-y-1 rounded-lg overflow-hidden">
             {filteredPosts.length === 0 ? (
@@ -400,6 +458,8 @@ const Index = () => {
                       likes={post.likes}
                       replies={post.replies}
                       time={post.time}
+                      media_url={post.media_url}
+                      media_type={post.media_type}
                     >
                       <Link
                         to={`/ministries/${post.ministryId}`}

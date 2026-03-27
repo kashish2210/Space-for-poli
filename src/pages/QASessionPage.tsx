@@ -51,11 +51,25 @@ export default function QASessionPage() {
     const text = inputText.trim();
     setInputText("");
 
+    const userName = user.name || user.email?.split("@")[0] || "User";
+
+    // Optimistically add message to UI immediately
+    const userMsg = {
+      $id: `local-${Date.now()}`,
+      $createdAt: new Date().toISOString(),
+      session_id: sessionId,
+      user_id: user.$id,
+      user_name: userName,
+      text,
+      is_ai: false,
+    } as unknown as QAMessageDoc;
+    setMessages(prev => [...prev, userMsg]);
+    setTimeout(() => scrollToBottom(), 100);
+
     try {
-      const userName = user.name || user.email?.split("@")[0] || "User";
       await sendQAMessage(sessionId, user.$id, userName, text);
 
-      // AI auto-reply logic (for Q&A, maybe always reply to questions?)
+      // AI auto-reply logic
       if (text.endsWith("?") || Math.random() > 0.3) {
         setIsAiTyping(true);
         setTimeout(() => scrollToBottom(), 100);
@@ -68,6 +82,17 @@ export default function QASessionPage() {
           
           if (aiResponse) {
             await sendQAMessage(sessionId, "gemini-ai-bot", "Q&A AI Assistant", aiResponse, true);
+            // Optimistically add AI reply to UI
+            const aiMsg = {
+              $id: `ai-${Date.now()}`,
+              $createdAt: new Date().toISOString(),
+              session_id: sessionId,
+              user_id: "gemini-ai-bot",
+              user_name: "Q&A AI Assistant",
+              text: aiResponse,
+              is_ai: true,
+            } as unknown as QAMessageDoc;
+            setMessages(prev => [...prev, aiMsg]);
           }
         } catch (error) {
           console.error("AI Error:", error);

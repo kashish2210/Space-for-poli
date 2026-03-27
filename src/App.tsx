@@ -28,6 +28,7 @@ import MunicipalityPage from "./pages/MunicipalityPage";
 import MunicipalitiesListPage from "./pages/MunicipalitiesListPage";
 import WardDetailPage from "./pages/WardDetailPage";
 import BookmarksPage from "./pages/BookmarksPage";
+import QASessionPage from "./pages/QASessionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({});
@@ -62,6 +63,7 @@ function AnimatedRoutes() {
           <Route path="/parties/:id" element={<PartyDetailPage />} />
           <Route path="/rallies" element={<RalliesPage />} />
           <Route path="/rallies/:id" element={<RallyRoomPage />} />
+          <Route path="/qa/:sessionId" element={<QASessionPage />} />
           <Route path="/states" element={<StatesPage />} />
           <Route path="/states/:id" element={<StateDetailPage />} />
           <Route path="/parliament" element={<ParliamentPage />} />

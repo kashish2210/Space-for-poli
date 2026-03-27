@@ -9,6 +9,11 @@ import { cityOfficials } from "@/data/officials";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { getRallyCalendarUrl } from "@/services/rallyService";
+import { CreatePostInput } from "@/components/CreatePostInput";
+import { createPost } from "@/services/postService";
+import { uploadMedia } from "@/services/storageService";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const cityDatabase: Record<string, { name: string; state: string; description: string; memberCount: number; ministries: { id: string; name: string; memberCount: number; latestUpdate?: string }[] }> = {
   delhi: {
@@ -290,6 +295,7 @@ const item = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 export default function CityDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const city = cityDatabase[id || ""] || fallbackCity;
   const discussions = cityDiscussions[id || ""] || [];
   const qaSessions = cityQASessions[id || ""] || [];
@@ -298,13 +304,60 @@ export default function CityDetailPage() {
   const [activeTag, setActiveTag] = useState<TagVariant | "all">("all");
   const [activeMinistry, setActiveMinistry] = useState<string>("all");
   const [showOfficials, setShowOfficials] = useState(false);
+  const [localPosts, setLocalPosts] = useState<any[]>([]);
 
   const officials = cityOfficials[id || ""] || [];
 
-  const ministryNames = [...new Set(discussions.map((d) => d.ministry))];
-  const availableTags = allTags.filter((t) => discussions.some((d) => d.tag === t));
+  const handleCreatePost = async (content: string, tag: TagVariant, file?: File | null) => {
+    if (!user) return;
+    try {
+      let media_url = null;
+      let media_type = null;
+      if (file) {
+        media_url = await uploadMedia(file);
+        media_type = file.type;
+      }
+      
+      const newPost = {
+        author: user.name || user.email?.split("@")[0] || "User",
+        tag,
+        content,
+        likes: 0,
+        replies: 0,
+        time: "Just now",
+        ministry: activeMinistry !== "all" ? activeMinistry : city.ministries[0]?.name || "General",
+        ministryId: activeMinistry !== "all" ? city.ministries.find(m => m.name === activeMinistry)?.id || "general" : "general",
+        media_url,
+        media_type
+      };
+      
+      await createPost({
+        user_id: user.$id,
+        user_name: newPost.author,
+        content,
+        tag,
+        city: city.name,
+        city_id: id || "",
+        ministry: newPost.ministry,
+        ministry_id: newPost.ministryId,
+        group_id: `city-${id}`,
+        media_url,
+        media_type
+      });
 
-  const filtered = discussions.filter((d) => {
+      setLocalPosts((prev) => [newPost, ...prev]);
+      toast.success("Posted successfully!");
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
+  const allDiscussions = [...localPosts, ...discussions];
+  const ministryNames = [...new Set(allDiscussions.map((d) => d.ministry))];
+  const availableTags = allTags.filter((t) => allDiscussions.some((d) => d.tag === t));
+
+  const filtered = allDiscussions.filter((d) => {
     const tagMatch = activeTag === "all" || d.tag === activeTag;
     const ministryMatch = activeMinistry === "all" || d.ministry === activeMinistry;
     return tagMatch && ministryMatch;
@@ -549,6 +602,8 @@ export default function CityDetailPage() {
             </div>
           </div>
 
+          <CreatePostInput onSubmit={handleCreatePost} className="mb-6 shadow-sm" />
+
           {/* Discussion Posts */}
           <div className="space-y-3">
             {filtered.length === 0 ? (
@@ -566,6 +621,8 @@ export default function CityDetailPage() {
                       likes={d.likes}
                       replies={d.replies}
                       time={d.time}
+                      media_url={d.media_url}
+                      media_type={d.media_type}
                     >
                       <Link to={`/ministries/${d.ministryId}`} className="text-xs text-accent hover:underline inline-flex items-center gap-1">
                         <Building2 className="h-3 w-3" />{d.ministry}

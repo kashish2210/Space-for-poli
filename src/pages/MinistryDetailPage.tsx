@@ -394,19 +394,16 @@ export default function MinistryDetailPage() {
             <div className="grid gap-3 md:grid-cols-3">
               {trending.map((d, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-                  <div className="rounded-lg border bg-card p-4 hover:border-accent/50 transition-colors h-full flex flex-col">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TagBadge variant={d.tag} label={d.tag.charAt(0).toUpperCase() + d.tag.slice(1)} />
-                      <span className="text-xs text-muted-foreground ml-auto">{d.time}</span>
-                    </div>
-                    <p className="text-sm text-card-foreground leading-relaxed line-clamp-2 mb-2 flex-1">{d.content}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-card-foreground">{d.author}</span>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>👍 {d.likes}</span>
-                        <span>💬 {d.replies}</span>
-                      </div>
-                    </div>
+                  <div className="h-full flex flex-col">
+                    <DiscussionPost
+                      postId={`ministry-trending-${id}-${i}`}
+                      author={d.author}
+                      tag={d.tag}
+                      content={d.content}
+                      likes={d.likes}
+                      replies={d.replies}
+                      time={d.time}
+                    />
                   </div>
                 </motion.div>
               ))}
@@ -462,7 +459,7 @@ export default function MinistryDetailPage() {
           ) : (
             filtered.map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <DiscussionPost {...d} />
+                <DiscussionPost postId={`ministry-${id}-${i}`} {...d} />
               </motion.div>
             ))
           )}

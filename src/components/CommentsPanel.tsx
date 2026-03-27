@@ -43,7 +43,15 @@ export function CommentsPanel({ postId, postContent }: CommentsPanelProps) {
 
     try {
       const userName = user.name || user.email?.split("@")[0] || "User";
-      await addComment(postId, user.$id, userName, text);
+      const userComment = Object.assign(await addComment(postId, user.$id, userName, text)) as unknown as CommentDoc;
+      
+      // Update UI immediately (vital for local fallback where subscriptions don't fire)
+      if (userComment) {
+        setComments(prev => {
+          if (prev.some(c => c.$id === userComment.$id)) return prev;
+          return [...prev, userComment];
+        });
+      }
 
       // Trigger Gemini AI Reply if it's the first few comments or randomly
       if (Math.random() > 0.5 || comments.length === 0) {
@@ -56,7 +64,13 @@ Generate a helpful, insightful, and constructive response to keep the conversati
         );
         
         if (aiResponse) {
-          await addComment(postId, "gemini-ai-bot", "Community AI", aiResponse);
+          const aiComment = Object.assign(await addComment(postId, "gemini-ai-bot", "Community AI", aiResponse)) as unknown as CommentDoc;
+          if (aiComment) {
+            setComments(prev => {
+              if (prev.some(c => c.$id === aiComment.$id)) return prev;
+              return [...prev, aiComment];
+            });
+          }
         }
         setIsTypingAI(false);
       }

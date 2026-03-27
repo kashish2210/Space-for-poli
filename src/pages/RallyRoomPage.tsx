@@ -209,10 +209,15 @@ export default function RallyRoomPage() {
 
     if (user) {
       const userName = user.name || user.email?.split('@')[0] || 'User';
+
+      // Optimistically add user message immediately
+      const userMsg = { id: `m${Date.now()}`, author: userName, role: CURRENT_USER_ROLE, text, timestamp: new Date() };
+      setMessages((prev) => [...prev, userMsg]);
+
       try {
         await sendChatMessage(rallySlug, user.$id, userName, CURRENT_USER_ROLE, text);
 
-        // Optional AI Auto-Reply (e.g., if tagged or 50% chance for demo)
+        // Optional AI Auto-Reply
         if (text.toLowerCase().includes("ai") || text.endsWith("?") || Math.random() > 0.5) {
           setIsAiTyping(true);
           try {
@@ -222,6 +227,11 @@ export default function RallyRoomPage() {
             );
             if (aiResponse) {
               await sendChatMessage(rallySlug, "gemini-ai-bot", "Rally AI Moderator", "speaker", aiResponse);
+              // Optimistically add AI reply
+              setMessages((prev) => [
+                ...prev,
+                { id: `ai${Date.now()}`, author: "Rally AI Moderator", role: "speaker", text: aiResponse, timestamp: new Date() },
+              ]);
             }
           } catch (e) {
             console.error("AI reply failed", e);
@@ -230,11 +240,7 @@ export default function RallyRoomPage() {
           }
         }
       } catch {
-        // Fallback to local-only if DB fails
-        setMessages((prev) => [
-          ...prev,
-          { id: `m${Date.now()}`, author: "You", role: CURRENT_USER_ROLE, text, timestamp: new Date() },
-        ]);
+        // Appwrite failed but we already added locally - nothing to do
       }
     } else {
       setMessages((prev) => [

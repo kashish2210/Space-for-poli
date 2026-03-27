@@ -131,7 +131,7 @@ export default function StateDetailPage() {
       <motion.div variants={container} initial="hidden" animate="show" className="space-y-3">
         {state.discussions.map((d, i) => (
           <motion.div key={i} variants={item}>
-            <DiscussionPost {...d} />
+            <DiscussionPost postId={`state-${id}-${i}`} {...d} />
           </motion.div>
         ))}
       </motion.div>

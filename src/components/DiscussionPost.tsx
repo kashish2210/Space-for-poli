@@ -16,11 +16,13 @@ interface DiscussionPostProps {
   likes: number;
   replies: number;
   time: string;
+  media_url?: string | null;
+  media_type?: string | null;
   initialVote?: "up" | "down" | null;
   children?: React.ReactNode;
 }
 
-export function DiscussionPost({ postId, author, tag, content, likes, replies, time, initialVote = null, children }: DiscussionPostProps) {
+export function DiscussionPost({ postId, author, tag, content, likes, replies, time, media_url, media_type, initialVote = null, children }: DiscussionPostProps) {
   const { user } = useAuth();
   const [vote, setVote] = useState<"up" | "down" | null>(initialVote);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -71,6 +73,15 @@ export function DiscussionPost({ postId, author, tag, content, likes, replies, t
       setIsBookmarked(prev);
       toast.error("Failed to update bookmark");
     } else {
+      // Also persist the full post snapshot so BookmarksPage can show it
+      const snapshot = { postId, author, tag, content, likes, replies, time, media_url, media_type };
+      const stored = JSON.parse(localStorage.getItem('local_bookmark_posts') || '{}');
+      if (prev) {
+        delete stored[postId];
+      } else {
+        stored[postId] = snapshot;
+      }
+      localStorage.setItem('local_bookmark_posts', JSON.stringify(stored));
       toast.success(prev ? "Removed from bookmarks" : "Saved to bookmarks");
     }
   };
@@ -112,7 +123,18 @@ export function DiscussionPost({ postId, author, tag, content, likes, replies, t
           </div>
 
           {/* Content */}
-          <p className="text-sm text-card-foreground/90 leading-relaxed mb-2">{content}</p>
+          <p className="text-sm text-card-foreground/90 leading-relaxed mb-3">{content}</p>
+
+          {/* Media Attachment */}
+          {media_url && (
+            <div className="mb-3 rounded-lg overflow-hidden border border-border">
+              {media_type?.startsWith("video/") ? (
+                <video src={media_url} controls className="w-full max-h-[400px] object-contain bg-black/5" />
+              ) : (
+                <img src={media_url} alt="Post attachment" className="w-full max-h-[400px] object-cover" />
+              )}
+            </div>
+          )}
 
           {children}
 

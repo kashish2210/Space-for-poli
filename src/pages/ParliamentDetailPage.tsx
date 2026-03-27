@@ -58,7 +58,7 @@ export default function ParliamentDetailPage() {
       <motion.div variants={container} initial="hidden" animate="show" className="space-y-3">
         {group.discussions.map((d, i) => (
           <motion.div key={i} variants={item}>
-            <DiscussionPost {...d} />
+            <DiscussionPost postId={`parliament-${id}-${i}`} {...d} />
           </motion.div>
         ))}
       </motion.div>
