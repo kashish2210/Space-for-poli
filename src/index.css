@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Space-themed deep dark base */
+    --background: 228 20% 10%;
+    --foreground: 220 14% 88%;
+
+    --card: 225 18% 14%;
+    --card-foreground: 220 14% 92%;
+
+    --popover: 225 18% 12%;
+    --popover-foreground: 220 14% 92%;
+
+    --primary: 250 90% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 228 18% 20%;
+    --secondary-foreground: 220 14% 80%;
+
+    --muted: 228 18% 18%;
+    --muted-foreground: 220 10% 48%;
+
+    --accent: 250 90% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 228 16% 22%;
+    --input: 228 18% 20%;
+    --ring: 250 90% 65%;
+
+    --radius: 0.625rem;
+
+    /* Tags */
+    --tag-appreciation: 152 68% 42%;
+    --tag-appreciation-foreground: 152 68% 96%;
+    --tag-complaint: 0 72% 55%;
+    --tag-complaint-foreground: 0 0% 100%;
+    --tag-suggestion: 210 85% 58%;
+    --tag-suggestion-foreground: 0 0% 100%;
+    --tag-question: 280 65% 62%;
+    --tag-question-foreground: 280 65% 96%;
+    --tag-discussion: 215 14% 52%;
+    --tag-discussion-foreground: 0 0% 100%;
+    --tag-update: 172 68% 42%;
+    --tag-update-foreground: 172 68% 96%;
+    --tag-announcement: 38 90% 55%;
+    --tag-announcement-foreground: 38 90% 10%;
+
+    --rally: 0 80% 58%;
+    --rally-foreground: 0 0% 100%;
+
+    --journalist: 38 90% 55%;
+    --journalist-foreground: 38 90% 10%;
+
+    /* Sidebar */
+    --sidebar-background: 230 22% 8%;
+    --sidebar-foreground: 220 14% 78%;
+    --sidebar-primary: 250 90% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 228 18% 20%;
+    --sidebar-accent-foreground: 220 14% 92%;
+    --sidebar-border: 230 18% 14%;
+    --sidebar-ring: 250 90% 65%;
+
+    /* Upvote/downvote */
+    --upvote: 16 100% 55%;
+    --downvote: 250 90% 65%;
+    --online: 152 70% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-white/10;
+  }
+  body {
+    @apply bg-transparent text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  /* Global Glassmorphism Override for all standard panels */
+  .bg-card, .bg-background, .bg-popover, .bg-muted {
+    @apply !bg-[#0B0F19]/40 !backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.1)];
+  }
+  .bg-secondary {
+    @apply !bg-white/5 !backdrop-blur-md;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+
+  /* Custom scrollbar (sleek dark) */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(228 18% 22%);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(228 18% 32%);
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-[#0B0F19]/50 backdrop-blur-lg border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+  }
+  .glass-card {
+    @apply bg-[#111827]/60 backdrop-blur-xl border border-indigo-500/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] hover:bg-[#111827]/80 hover:border-indigo-400/40 transition-all duration-300;
+  }
+  .glass-button {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300;
+  }
+}
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 30%, hsl(228 18% 24%) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite ease-in-out;
+}
+
+/* Glow effect for interactive elements */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px 0 hsla(250, 90%, 65%, 0.15); }
+  50% { box-shadow: 0 0 20px 2px hsla(250, 90%, 65%, 0.3); }
+}
+
+.animate-glow {
+  animation: glow-pulse 2.5s infinite ease-in-out;
+}
+
+/* Page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
