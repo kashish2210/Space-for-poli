@@ -3,6 +3,7 @@ import { Building2, Mic, Home, MapPin, Users, Hash, ChevronDown, Landmark, Scale
 import { useState } from "react";
 import { useJoinedGroups } from "@/contexts/JoinedGroupsContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { EmergencyButton } from "./EmergencyButton";
 
 const channels = [
   { to: "/", label: "home", icon: Home, category: null },
@@ -39,6 +40,10 @@ export function AppNavbar() {
 
         {/* Channels */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+          <div className="px-2 mb-4">
+            <EmergencyButton />
+          </div>
+
           {/* Home channel */}
           {channels.filter((c) => !c.category).map((ch) => {
             const active = location.pathname === ch.to;
@@ -147,15 +152,23 @@ export function AppNavbar() {
                   <MessageSquare className="h-4 w-4 text-sidebar-foreground/70" />
                   <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary border-2 border-sidebar" />
                 </button>
-                {chatOpen && (
-                  <div className="absolute bottom-full mb-2 right-0 w-64 glass-panel rounded-lg shadow-lg border border-white/10 overflow-hidden">
+              </div>
+              {/* Chat panel — rendered outside the button so it doesn't overlap the nav */}
+              {chatOpen && (
+                <>
+                  {/* Backdrop to close on outside click */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setChatOpen(false)}
+                  />
+                  <div className="fixed left-[248px] bottom-4 z-50 w-72 glass-panel rounded-xl shadow-2xl border border-white/10 overflow-hidden">
                     <div className="p-3 border-b border-white/10 flex justify-between items-center">
-                      <span className="text-xs font-semibold">Chats</span>
-                      <Link to="/rallies" className="text-[10px] text-primary hover:underline">View All</Link>
+                      <span className="text-xs font-semibold">Active Chats</span>
+                      <Link to="/rallies" onClick={() => setChatOpen(false)} className="text-[10px] text-primary hover:underline">View All</Link>
                     </div>
-                    <div className="max-h-48 overflow-y-auto">
-                      <Link to="/rallies" className="flex items-center gap-3 p-3 hover:bg-sidebar-accent/50 transition-colors">
-                        <div className="h-8 w-8 rounded-full bg-rally/20 flex items-center justify-center text-rally">
+                    <div className="max-h-56 overflow-y-auto">
+                      <Link to="/rallies/union-budget-2025" onClick={() => setChatOpen(false)} className="flex items-center gap-3 p-3 hover:bg-sidebar-accent/50 transition-colors">
+                        <div className="h-9 w-9 rounded-full bg-rally/20 flex items-center justify-center text-rally shrink-0">
                           <Mic className="h-4 w-4" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -163,8 +176,8 @@ export function AppNavbar() {
                           <p className="text-[10px] text-muted-foreground truncate">Last msg: Thanks for answering...</p>
                         </div>
                       </Link>
-                      <Link to="/rallies" className="flex items-center gap-3 p-3 hover:bg-sidebar-accent/50 transition-colors">
-                        <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                      <Link to="/rallies/mumbai-clean-city" onClick={() => setChatOpen(false)} className="flex items-center gap-3 p-3 hover:bg-sidebar-accent/50 transition-colors">
+                        <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
                           <Building className="h-4 w-4" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -172,10 +185,26 @@ export function AppNavbar() {
                           <p className="text-[10px] text-muted-foreground truncate">Live Q&A active right now</p>
                         </div>
                       </Link>
+                      {joinedGroups.slice(0, 3).map((g) => (
+                        <Link key={g.id} to={g.path} onClick={() => setChatOpen(false)} className="flex items-center gap-3 p-3 hover:bg-sidebar-accent/50 transition-colors">
+                          <div className="h-9 w-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold text-sidebar-accent-foreground shrink-0">
+                            {g.name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{g.name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{g.notifications > 0 ? `${g.notifications} new messages` : "No new messages"}</p>
+                          </div>
+                          {g.notifications > 0 && (
+                            <span className="shrink-0 inline-flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold min-w-[16px] h-[16px] px-1">
+                              {g.notifications}
+                            </span>
+                          )}
+                        </Link>
+                      ))}
                     </div>
                   </div>
-                )}
-              </div>
+                </>
+              )}
               <button onClick={signOut} className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors" title="Sign out">
                 <LogOut className="h-4 w-4 text-sidebar-foreground/70" />
               </button>
@@ -201,9 +230,12 @@ export function AppNavbar() {
           <img src="/logo.jpg" alt="Space Logo" className="h-6 w-6 rounded-lg object-cover" />
           Space
         </Link>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors">
-          <Hash className="h-5 w-5 text-sidebar-foreground" />
-        </button>
+        <div className="flex items-center gap-2">
+          <EmergencyButton />
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors">
+            <Hash className="h-5 w-5 text-sidebar-foreground" />
+          </button>
+        </div>
       </header>
 
       {/* Mobile dropdown */}
