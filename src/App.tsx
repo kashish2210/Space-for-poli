@@ -95,15 +95,12 @@ const AppContent = () => {
   return (
     <ProtectedRoute>
       <AppNavbar />
-      {/* Global Video Background */}
+      {/* Global Background Image */}
       <div className="fixed inset-0 z-[-2] w-full h-full overflow-hidden bg-black">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute top-1/2 left-1/2 min-w-full min-h-full -translate-x-1/2 -translate-y-1/2 object-cover opacity-70 mix-blend-screen"
-          src="/background.mp4"
+        <img
+          src="/image.png"
+          alt="Background"
+          className="absolute top-1/2 left-1/2 min-w-full min-h-full -translate-x-1/2 -translate-y-1/2 object-cover opacity-70"
         />
         {/* Dark gradient overlay + slight blur for text readability */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0B0F19]/80 via-[#0B0F19]/40 to-[#0B0F19]/80 backdrop-blur-[3px] pointer-events-none"></div>

@@ -24,8 +24,17 @@ export const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           transition={{ duration: 0.8, ease: "easeInOut" }}
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0B0F19] overflow-hidden"
         >
+          {/* Video Background */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-screen z-0"
+            src="/background.mp4"
+          />
           {/* Animated Stars */}
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 z-10">
             {[...Array(40)].map((_, i) => (
               <motion.div
                 key={i}
